@@ -10,7 +10,8 @@ import flixel.group.FlxGroup.FlxTypedGroup;
 
 class PlayState extends FlxState
 {
-	public static inline var tailleCarre:Int = 8;
+	private var tailleCarre:Int = 8;
+	private var offsetX:Int = 0;
 	
 	private var currentTetros:Int;
 	private var currentRotation:Int;
@@ -80,10 +81,19 @@ class PlayState extends FlxState
 				]
 			]
 		];
-
+		
+		var grid:Grid = new Grid();
+		
+		add(grid.drawGrid());
+		
+		
+		tailleCarre = Math.round(grid.getCellSize());
+		offsetX = Math.round(grid.getOffsetX());
+		
 		currentTetros = 3;
 		currentRotation = 1;
 		drawShape(currentTetros, currentRotation);
+		
 		super.create();
 	}
 
@@ -127,7 +137,7 @@ class PlayState extends FlxState
 		for (line in sourceForm) {
 			for(column in line){
 				if(column == 1){
-					var sprite:FlxSprite = new FlxSprite(tailleCarre * currentColumn, tailleCarre * currentLine);
+					var sprite:FlxSprite = new FlxSprite(tailleCarre * currentColumn + offsetX, tailleCarre * currentLine);
 					sprite.makeGraphic(tailleCarre -1, tailleCarre - 1);
 					shape.add(sprite);
 				}
