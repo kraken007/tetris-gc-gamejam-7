@@ -95,7 +95,8 @@ class PlayState extends FlxState
 		currentTetros = new Tetros();
 		//centrage du tetros x
 		var tetrosWidth = tetros[currentTetros.id][currentTetros.rotation][0].length;
-		currentTetros.positionX = Math.floor((grid.width - tetrosWidth) / 2) + 1;
+		currentTetros.positionX = Math.floor((grid.width - tetrosWidth) / 2) +1;
+		currentTetros.positionX = 0;
 		var sourceForm = tetros[currentTetros.id][currentTetros.rotation];
 		drawShape(sourceForm, currentTetros.positionX, currentTetros.positionY);
 		
@@ -113,17 +114,7 @@ class PlayState extends FlxState
 
 	override public function update(elapsed:Float):Void
 	{
-
-		if (FlxG.keys.anyJustPressed([SPACE])){
-			
-			if((tetros[currentTetros.id].length -1) == currentTetros.rotation){
-				currentTetros.rotation = 0;
-			}else{
-				currentTetros.rotation += 1;
-			}
-			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
-		}
-		
+		//changé de tetros
 		if (FlxG.keys.anyJustPressed([R])){
 			
 			if(currentTetros.id == 4){
@@ -140,6 +131,7 @@ class PlayState extends FlxState
 		var oldY:Int = currentTetros.positionY;
 		var oldR:Int = currentTetros.rotation;
 		
+		//déplacement tetros
 		if (FlxG.keys.anyJustPressed([RIGHT])){
 			
 			currentTetros.positionX += 1;
@@ -149,6 +141,7 @@ class PlayState extends FlxState
 			currentTetros.positionX -= 1;
 		}
 		
+		//rotation tetros
 		if (FlxG.keys.anyJustPressed([UP, DOWN])){
 			
 			if((tetros[currentTetros.id].length -1) == currentTetros.rotation){
@@ -168,7 +161,6 @@ class PlayState extends FlxState
 			timeDrop = dropSpeed;
 			
 			drawShape(tetros[currentTetros.id][currentTetros.rotation],currentTetros.positionX, currentTetros.positionY);
-			
 		}
 		
 		if (collide()) {
@@ -179,7 +171,8 @@ class PlayState extends FlxState
 			
 			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
 		}
-		
+		//test
+		//drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
 		
 		super.update(elapsed);
 	}
@@ -191,7 +184,6 @@ class PlayState extends FlxState
 		}
 		shape = new FlxTypedGroup();
 		
-		
 		var currentLine:Int = 0;
 		var currentColumn:Int = 0;
 		for (line in pSourceForm) {
@@ -200,8 +192,8 @@ class PlayState extends FlxState
 					var sprite:FlxSprite = new FlxSprite(tailleCarre * currentColumn + offsetX, tailleCarre * currentLine);
 					sprite.makeGraphic(tailleCarre -1, tailleCarre - 1);
 					//positionné le sprite dans la bonne colonne.
-					sprite.x = sprite.x + (pX - 1) * tailleCarre;
-					sprite.y = sprite.y + (pY - 1) * tailleCarre;
+					sprite.x = sprite.x + (pX) * tailleCarre;
+					sprite.y = sprite.y + (pY) * tailleCarre;
 					shape.add(sprite);
 				}
 				currentColumn++;
@@ -222,14 +214,14 @@ class PlayState extends FlxState
 		{
 			for (c in 0...tmpShape[l].length) 
 			{
-				var cGrid:Int = c -1 + currentTetros.positionX;
-				var lGrid:Int = l -1 + currentTetros.positionY;
+				var cGrid:Int = c  + currentTetros.positionX;
+				var lGrid:Int = l  + currentTetros.positionY;
 				if(tmpShape[l][c] == 1) {
 					if(cGrid <= 0 || cGrid > grid.width - 1) {
 						collideStatus = true;
 						break;
 					}
-					if(lGrid > grid.height) {
+					if(lGrid > grid.height -1) {
 						collideStatus = true;
 						break;
 					}

@@ -13,9 +13,9 @@ import Math;
 class Tetros 
 {
 	public var id:Int = 1;
-	public var rotation:Int = 1;
-	public var positionX = 1;
-	public var positionY = 1;
+	public var rotation:Int = 0;
+	public var positionX = 0;
+	public var positionY = 0;
 
 	public function new() 
 	{

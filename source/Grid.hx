@@ -35,7 +35,6 @@ class Grid
 		var currentLine:Int = 0;
 		var currentCol:Int = 0;
 		for (ligne in cells){
-			
 			for(colonne in ligne){
 				var sprite:FlxSprite = new FlxSprite(cellSize * currentCol + offsetX, cellSize * currentLine);
 				sprite.makeGraphic(Math.round(cellSize) - 1, Math.round(cellSize) - 1, FlxColor.GRAY);
