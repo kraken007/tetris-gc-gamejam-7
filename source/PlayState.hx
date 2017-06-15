@@ -93,12 +93,13 @@ class PlayState extends FlxState
 		offsetX = Math.round(grid.getOffsetX());
 		
 		currentTetros = new Tetros();
+		currentTetros.id = 3;
 		//centrage du tetros x
 		var tetrosWidth = tetros[currentTetros.id][currentTetros.rotation][0].length;
-		currentTetros.positionX = Math.floor((grid.width - tetrosWidth) / 2) +1;
-		currentTetros.positionX = 0;
-		var sourceForm = tetros[currentTetros.id][currentTetros.rotation];
-		drawShape(sourceForm, currentTetros.positionX, currentTetros.positionY);
+		currentTetros.positionX = Math.floor((grid.width - tetrosWidth) / 2);
+		currentTetros.shape = tetros[currentTetros.id][currentTetros.rotation];
+		
+		drawShape(currentTetros.shape, currentTetros.positionX, currentTetros.positionY);
 		
 		
 		//gestion du temps pour faire tombé le tetros
@@ -169,6 +170,7 @@ class PlayState extends FlxState
 			currentTetros.positionY = oldY;
 			currentTetros.rotation = oldR;
 			
+			//transfer();
 			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
 		}
 		//test
@@ -190,7 +192,7 @@ class PlayState extends FlxState
 			for(column in line){
 				if(column == 1){
 					var sprite:FlxSprite = new FlxSprite(tailleCarre * currentColumn + offsetX, tailleCarre * currentLine);
-					sprite.makeGraphic(tailleCarre -1, tailleCarre - 1);
+					sprite.makeGraphic(tailleCarre -1, tailleCarre - 1, currentTetros.color);
 					//positionné le sprite dans la bonne colonne.
 					sprite.x = sprite.x + (pX) * tailleCarre;
 					sprite.y = sprite.y + (pY) * tailleCarre;
@@ -217,7 +219,7 @@ class PlayState extends FlxState
 				var cGrid:Int = c  + currentTetros.positionX;
 				var lGrid:Int = l  + currentTetros.positionY;
 				if(tmpShape[l][c] == 1) {
-					if(cGrid <= 0 || cGrid > grid.width - 1) {
+					if(cGrid < 0 || cGrid > grid.width - 1) {
 						collideStatus = true;
 						break;
 					}
@@ -225,7 +227,7 @@ class PlayState extends FlxState
 						collideStatus = true;
 						break;
 					}
-					if(grid.cells[lGrid][cGrid] == 1) {
+					if(grid.cells[lGrid][cGrid] != 0) {
 						collideStatus = true;
 						break;
 					}
@@ -233,5 +235,21 @@ class PlayState extends FlxState
 			}
 		}
 		return collideStatus;
+	}
+	private function transfer():Void 
+	{
+		var tmpShape:Array<Array<Int>>;
+		tmpShape = tetros[currentTetros.id][currentTetros.rotation];
+		for (l in 0...tmpShape.length) 
+		{
+			for (c in 0...tmpShape[l].length) 
+			{
+				var cGrid:Int = c  + currentTetros.positionX;
+				var lGrid:Int = l  + currentTetros.positionY;
+				if(tmpShape[l][c] != 0) {
+					grid.cells[l][c] = currentTetros.id;
+				}
+			}
+		}
 	}
 }
