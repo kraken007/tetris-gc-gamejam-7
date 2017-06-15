@@ -23,10 +23,7 @@ class Grid
 		cellSize = FlxG.height / height;
 		offsetX = (FlxG.width / 2) - (cellSize * width / 2);
 		
-		
 		cells = [for (ligne in 0...height) [for (collone in 0...width) 0]];
-		
-		trace(cells);
 	}
 	
 	public function drawGrid()
@@ -34,10 +31,17 @@ class Grid
 		var test = new FlxTypedGroup();
 		var currentLine:Int = 0;
 		var currentCol:Int = 0;
+		var color:FlxColor = new FlxColor();
+		
 		for (ligne in cells){
 			for(colonne in ligne){
 				var sprite:FlxSprite = new FlxSprite(cellSize * currentCol + offsetX, cellSize * currentLine);
-				sprite.makeGraphic(Math.round(cellSize) - 1, Math.round(cellSize) - 1, FlxColor.GRAY);
+				if(cells[currentLine][currentCol] != 0){
+					color.setRGB(255, 0, 0, 255);
+				}else{
+					color.setRGB(128, 128, 128, 255);
+				}
+				sprite.makeGraphic(Math.round(cellSize) - 1, Math.round(cellSize) - 1, color);
 				test.add(sprite);
 				currentCol++;
 			}

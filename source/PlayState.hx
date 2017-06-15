@@ -4,9 +4,11 @@ import flixel.FlxState;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.math.FlxPoint;
+import flixel.math.FlxRandom;
 import flixel.util.FlxColor;
 import flixel.group.FlxGroup;
 import flixel.group.FlxGroup.FlxTypedGroup;
+import flixel.system.debug.watch.Tracker;
 
 class PlayState extends FlxState
 {
@@ -14,6 +16,7 @@ class PlayState extends FlxState
 	private var offsetX:Int = 0;
 	private var dropSpeed:Int = 1;
 	private var timeDrop:Float = 0;
+	private var stop:Bool = false;
 	
 	private var currentTetros:Tetros;
 	private var grid:Grid;
@@ -24,6 +27,8 @@ class PlayState extends FlxState
 	override public function create():Void
 	{
 		FlxG.mouse.visible = false;
+		FlxG.debugger.visible = true;
+		FlxG.log.redirectTraces = true;
 		
 		tetros = [
 			1 => [
@@ -88,27 +93,23 @@ class PlayState extends FlxState
 		
 		add(grid.drawGrid());
 		
+		grid.drawGrid();
 		
 		tailleCarre = Math.round(grid.getCellSize());
 		offsetX = Math.round(grid.getOffsetX());
 		
-		currentTetros = new Tetros();
-		currentTetros.id = 3;
-		//centrage du tetros x
-		var tetrosWidth = tetros[currentTetros.id][currentTetros.rotation][0].length;
-		currentTetros.positionX = Math.floor((grid.width - tetrosWidth) / 2);
-		currentTetros.shape = tetros[currentTetros.id][currentTetros.rotation];
-		
-		drawShape(currentTetros.shape, currentTetros.positionX, currentTetros.positionY);
-		
+		spanwTetros();		
 		
 		//gestion du temps pour faire tombé le tetros
 		timeDrop = dropSpeed;
 		
-		FlxG.watch.add(currentTetros,"rotation");
-		FlxG.watch.add(currentTetros, "id");
-		FlxG.watch.add(currentTetros,"positionY");
-		FlxG.watch.add(currentTetros,"positionX");
+		//FlxG.watch.add(currentTetros,"rotation");
+		//FlxG.watch.add(currentTetros, "id");
+		//FlxG.watch.add(currentTetros,"positionY");
+		//FlxG.watch.add(currentTetros, "positionX");
+		FlxG.watch.addQuick('stop', stop);
+		FlxG.watch.addQuick('cells', grid.cells);
+		
 		
 		super.create();
 	}
@@ -143,13 +144,20 @@ class PlayState extends FlxState
 		}
 		
 		//rotation tetros
-		if (FlxG.keys.anyJustPressed([UP, DOWN])){
+		if (FlxG.keys.anyJustPressed([UP])){
 			
 			if((tetros[currentTetros.id].length -1) == currentTetros.rotation){
 				currentTetros.rotation = 0;
 			}else{
 				currentTetros.rotation += 1;
 			}
+			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
+		}
+		
+		//acceleration du tetros
+		if (FlxG.keys.anyJustPressed([DOWN])){
+			currentTetros.positionY += 1;
+			timeDrop = dropSpeed;
 			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
 		}
 		
@@ -170,11 +178,17 @@ class PlayState extends FlxState
 			currentTetros.positionY = oldY;
 			currentTetros.rotation = oldR;
 			
-			//transfer();
+			if (stop == true){
+				stop = false;
+				transfer();
+				spanwTetros();
+			}
+			
 			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
+			
 		}
 		//test
-		//drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
+		//drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);		
 		
 		super.update(elapsed);
 	}
@@ -185,7 +199,7 @@ class PlayState extends FlxState
 			shape.kill();
 		}
 		shape = new FlxTypedGroup();
-		
+		currentTetros.shape = pSourceForm;
 		var currentLine:Int = 0;
 		var currentColumn:Int = 0;
 		for (line in pSourceForm) {
@@ -218,17 +232,24 @@ class PlayState extends FlxState
 			{
 				var cGrid:Int = c  + currentTetros.positionX;
 				var lGrid:Int = l  + currentTetros.positionY;
-				if(tmpShape[l][c] == 1) {
+				FlxG.watch.addQuick('lGrid',lGrid);
+				FlxG.watch.addQuick('lGrid',cGrid);
+				
+				if (tmpShape[l][c] == 1) {
 					if(cGrid < 0 || cGrid > grid.width - 1) {
 						collideStatus = true;
 						break;
 					}
 					if(lGrid > grid.height -1) {
 						collideStatus = true;
+						stop = true;
+						FlxG.log.add('collide Height');
 						break;
 					}
 					if(grid.cells[lGrid][cGrid] != 0) {
 						collideStatus = true;
+						stop = true;
+						FlxG.log.add('collide grid');
 						break;
 					}
 				}
@@ -239,7 +260,7 @@ class PlayState extends FlxState
 	private function transfer():Void 
 	{
 		var tmpShape:Array<Array<Int>>;
-		tmpShape = tetros[currentTetros.id][currentTetros.rotation];
+		tmpShape = currentTetros.shape;
 		for (l in 0...tmpShape.length) 
 		{
 			for (c in 0...tmpShape[l].length) 
@@ -247,9 +268,24 @@ class PlayState extends FlxState
 				var cGrid:Int = c  + currentTetros.positionX;
 				var lGrid:Int = l  + currentTetros.positionY;
 				if(tmpShape[l][c] != 0) {
-					grid.cells[l][c] = currentTetros.id;
+					grid.cells[lGrid][cGrid] = currentTetros.id;
+					
 				}
 			}
 		}
+		add(grid.drawGrid());
+	}
+	
+	private function spanwTetros():Void
+	{
+		currentTetros = new Tetros();
+		var random = new FlxRandom();
+		currentTetros.id = random.int(1,4);
+		//centrage du tetros x
+		var tetrosWidth = tetros[currentTetros.id][currentTetros.rotation][0].length;
+		currentTetros.positionX = Math.floor((grid.width - tetrosWidth) / 2);
+		currentTetros.shape = tetros[currentTetros.id][currentTetros.rotation];
+		
+		drawShape(currentTetros.shape, currentTetros.positionX, currentTetros.positionY);
 	}
 }
