@@ -16,7 +16,7 @@ class PlayState extends FlxState
 	private var offsetX:Int = 0;
 	private var dropSpeed:Int = 1;
 	private var timeDrop:Float = 0;
-	private var stop:Bool = false;
+	private var pauseFroceDrop:Bool = false;
 	
 	private var currentTetros:Tetros;
 	private var grid:Grid;
@@ -180,8 +180,9 @@ class PlayState extends FlxState
 		//FlxG.watch.add(currentTetros, "id");
 		//FlxG.watch.add(currentTetros,"positionY");
 		//FlxG.watch.add(currentTetros, "positionX");
-		FlxG.watch.addQuick('stop', stop);
-		FlxG.watch.addQuick('cells', grid.cells);
+		//FlxG.watch.addQuick('stop', stop);
+		//FlxG.watch.addQuick('cells', grid.cells);
+		//FlxG.watch.addQuick('pauseFroceDrop', pauseFroceDrop);
 		
 		
 		super.create();
@@ -237,13 +238,19 @@ class PlayState extends FlxState
 			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
 		}
 		
+		//eleve la pause du force down
+		if(!FlxG.keys.anyPressed([DOWN])) {
+			pauseFroceDrop = false;
+		}
+		
 		//acceleration du tetros
-		if (FlxG.keys.anyJustPressed([DOWN])){
+		if (FlxG.keys.anyPressed([DOWN]) && pauseFroceDrop == false){
 			currentTetros.positionY += 1;
 			timeDrop = dropSpeed;
 			if(collide()){
 				currentTetros.positionY -=  1;
 				transfer();
+				testLigneComplete();
 				spanwTetros();
 			}else {
 				drawShape(tetros[currentTetros.id][currentTetros.rotation],currentTetros.positionX, currentTetros.positionY);
@@ -260,12 +267,11 @@ class PlayState extends FlxState
 			if(collide()){
 				currentTetros.positionY -=  1;
 				transfer();
+				testLigneComplete();
 				spanwTetros();
 			}else {
 				drawShape(tetros[currentTetros.id][currentTetros.rotation],currentTetros.positionX, currentTetros.positionY);
 			}
-			
-			
 		}
 		
 		if (collide()) {
@@ -276,6 +282,8 @@ class PlayState extends FlxState
 			
 			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
 		}
+		
+		
 		
 		super.update(elapsed);
 	}
@@ -319,19 +327,15 @@ class PlayState extends FlxState
 			{
 				var cGrid:Int = c  + currentTetros.positionX;
 				var lGrid:Int = l  + currentTetros.positionY;
-				FlxG.watch.addQuick('lGrid',lGrid);
-				FlxG.watch.addQuick('lGrid',cGrid);
 				
 				if (tmpShape[l][c] == 1) {
 					if(cGrid < 0 || cGrid > grid.width - 1) {
 						return true;
 					}
 					if(lGrid > grid.height -1) {
-						FlxG.log.add('collide Height');
 						return true;
 					}
 					if(grid.cells[lGrid][cGrid] != 0) {
-						FlxG.log.add('collide grid');
 						return true;
 					}
 				}
@@ -369,6 +373,50 @@ class PlayState extends FlxState
 		currentTetros.positionX = Math.floor((grid.width - tetrosWidth) / 2);
 		currentTetros.shape = tetros[currentTetros.id][currentTetros.rotation];
 		
+		pauseFroceDrop = true;
+		timeDrop = dropSpeed;
+		
 		drawShape(currentTetros.shape, currentTetros.positionX, currentTetros.positionY);
+	}
+	
+	private function removeLineGrid(pLine) 
+	{
+		var token:Bool = true;
+		var ligne:Int = pLine;
+		var colEnd:Int = grid.width;
+		FlxG.log.add('remove line y:$pLine');
+		while (token) 
+		{
+			for (col in 0...colEnd) 
+			{
+				grid.cells[ligne][col] = grid.cells[ligne-1][col];
+			}
+			ligne--;
+			if(ligne == 1){
+				token = false;
+			}
+		}
+		add(grid.drawGrid());
+	}
+	
+	private function testLigneComplete() 
+	{
+		var ligneComplete:Bool;
+		for (l in 0...grid.height) 
+		{
+			ligneComplete = true;
+			for (c in 0...grid.width) 
+			{
+				if (grid.cells[l][c] == 0) 
+				{
+					ligneComplete = false;
+					break;
+				}
+			}
+			if (ligneComplete == true) 
+			{
+				removeLineGrid(l);
+			}
+		}
 	}
 }
