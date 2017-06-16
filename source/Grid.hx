@@ -17,9 +17,11 @@ class Grid
 	private var cellSize:Float = 0;
 	public var cells:Array<Array<Int>>;
 	private var offsetX:Float = 0;
+	private var colorTetros:Map<Int, FlxColor>;
 
-	public function new() 
+	public function new(ptetrosColor:Map<Int, FlxColor>) 
 	{
+		colorTetros = ptetrosColor;
 		cellSize = FlxG.height / height;
 		offsetX = (FlxG.width / 2) - (cellSize * width / 2);
 		
@@ -36,9 +38,11 @@ class Grid
 		for (ligne in cells){
 			for(colonne in ligne){
 				var sprite:FlxSprite = new FlxSprite(cellSize * currentCol + offsetX, cellSize * currentLine);
-				if(cells[currentLine][currentCol] != 0){
-					color.setRGB(255, 0, 0, 255);
+				var id:Int = cells[currentLine][currentCol];
+				if(id != 0){
+					color = colorTetros[id];
 				}else{
+					color = new FlxColor();
 					color.setRGB(128, 128, 128, 255);
 				}
 				sprite.makeGraphic(Math.round(cellSize) - 1, Math.round(cellSize) - 1, color);
