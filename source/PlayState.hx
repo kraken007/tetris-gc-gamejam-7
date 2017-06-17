@@ -5,32 +5,106 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.math.FlxPoint;
 import flixel.math.FlxRandom;
+import flixel.text.FlxText;
 import flixel.util.FlxColor;
 import flixel.group.FlxGroup;
 import flixel.group.FlxGroup.FlxTypedGroup;
-import flixel.system.debug.watch.Tracker;
+import flixel.system.FlxSound;
+//import flixel.system.debug.watch.Tracker;
+import flixel.system.FlxAssets;
+
 
 class PlayState extends FlxState
 {
 	private var tailleCarre:Int = 8;
 	private var offsetX:Int = 0;
-	private var dropSpeed:Int = 1;
+	private var dropSpeed:Float = 1;
 	private var timeDrop:Float = 0;
 	private var pauseFroceDrop:Bool = false;
+	private var keybordLatency:Int = Math.floor(1000 / 20);
+	private var gameTicks:Int = 0;
+	private var nextTimeDown = 0;
+	private var nextTimeLeft = 0;
+	private var nextTimeRight = 0;
+	private var score:Int = 0;
+	private var scoreTxt:FlxText;
+	private var level:Int = 0;
+	private var levelTxt:FlxText;
+	private var lines:Int = 0;
+	private var linesTxt:FlxText;
+	
+	private var levelUp:FlxSound;
+	private var removeLineSon:FlxSound;
 	
 	private var currentTetros:Tetros;
 	private var grid:Grid;
+	private var bag:Array<Int>;
 	
 	private var tetros:Map<Int, Array<Array<Array<Int>>>>;
 	private var tetrosColor:Map<Int, FlxColor>;
 	
 	private var shape:FlxTypedGroup<FlxSprite>;
+	
+	private var random:FlxRandom;
 		
 	override public function create():Void
 	{
-		FlxG.mouse.visible = false;
-		FlxG.debugger.visible = true;
-		FlxG.log.redirectTraces = true;
+		
+		random = new FlxRandom(Math.floor(Math.random() * 100000));
+		
+		if (FlxG.sound.music != null) 
+		{
+			FlxG.sound.destroy(true);
+		}
+		FlxG.sound.play(AssetPaths.walkingpiano_play__ogg,0.5,true);
+		levelUp = new FlxSound();
+		levelUp.loadEmbedded(AssetPaths.SFX_Powerup_01__ogg, false, false);
+		levelUp.volume = 1;
+		
+		removeLineSon = new FlxSound();
+		removeLineSon.loadEmbedded(AssetPaths.SFX_Powerup_03__ogg, false, false);
+		removeLineSon.volume = 1;
+		
+		//FlxG.mouse.visible = false;
+		//FlxG.debugger.visible = true;
+		//FlxG.log.redirectTraces = true;
+		
+		//affichage du score, level et lines
+		level = 1;
+		lines = 0;
+		score = 0;
+		FlxAssets.FONT_DEFAULT = AssetPaths.blocked__ttf;
+		var texteY = 100;
+		var texteX = 10;
+		
+		var h = 30;
+		var tmpColor = new FlxColor();
+		
+		var scoreFixeText = new FlxText(texteX, texteY, 0, "SCORE", 30, true);
+		scoreFixeText.color = tmpColor.setRGB(255, 0, 0, 255);
+		add(scoreFixeText);
+		texteY += h;
+		scoreTxt = new FlxText(texteX, texteY, 0, '$score', 30, true);
+		scoreTxt.color = tmpColor;
+		add(scoreTxt);
+		texteY += h;
+		texteY += h;
+		var linesFixeTxt = new FlxText(texteX, texteY, 0, "LINES", 30, true);
+		linesFixeTxt.color = tmpColor.setRGB(255, 0, 0, 255);
+		add(linesFixeTxt);
+		texteY += h;
+		linesTxt = new FlxText(texteX, texteY, 0, '$lines', 30, true);
+		linesTxt.color = tmpColor;
+		add(linesTxt);
+		texteY += h;
+		texteY += h;
+		var levelFixeText = new FlxText(texteX, texteY, 0, "LEVEL", 30, true);
+		levelFixeText.color = tmpColor.setRGB(255, 0, 0, 255);
+		add(levelFixeText);
+		texteY += h;
+		levelTxt = new FlxText(texteX, texteY, 0, '$level', 30, true);
+		levelTxt.color = tmpColor;
+		add(levelTxt);
 		
 		tetros = [
 			1 => [
@@ -160,17 +234,19 @@ class PlayState extends FlxState
 		var color6:FlxColor = new FlxColor();
 		tetrosColor.set(6, color6.setRGB(71, 184, 0, 255));
 		var color7:FlxColor = new FlxColor();
-		tetrosColor.set(7, color7.setRGB(255,0,0,255));
+		tetrosColor.set(7, color7.setRGB(0, 184 ,151, 255));
 		
 		grid = new Grid(tetrosColor);
 		
 		add(grid.drawGrid());
 		
-		grid.drawGrid();
-		
 		tailleCarre = Math.round(grid.getCellSize());
 		offsetX = Math.round(grid.getOffsetX());
 		
+		//on remplis le sac d'id de tetrominos
+		getNewBag();
+		
+		//départ on fait spanw un tetrominos
 		spanwTetros();		
 		
 		//gestion du temps pour faire tombé le tetros
@@ -189,18 +265,10 @@ class PlayState extends FlxState
 	}
 
 	override public function update(elapsed:Float):Void
-	{
-		//changé de tetros
-		if (FlxG.keys.anyJustPressed([R])){
-			
-			if(currentTetros.id == 4){
-				currentTetros.id = 1;
-			}else{
-				currentTetros.id += 1;
-			}
-			currentTetros.rotation = 0;
-			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
-		}
+	{		
+		//FlxG.watch.addQuick('bag', bag);
+		//FlxG.watch.addQuick('bagT', bag.length);
+		gameTicks = FlxG.game.ticks;
 		
 		//save old position
 		var oldX:Int = currentTetros.positionX;
@@ -208,12 +276,12 @@ class PlayState extends FlxState
 		var oldR:Int = currentTetros.rotation;
 		
 		//déplacement tetros
-		if (FlxG.keys.anyJustPressed([RIGHT])){
-			
+		if (FlxG.keys.pressed.RIGHT && gameTicks > nextTimeRight){
+			nextTimeRight = gameTicks + keybordLatency * 2;
 			currentTetros.positionX += 1;
 		}
-		if (FlxG.keys.anyJustPressed([LEFT])){
-			
+		if (FlxG.keys.pressed.LEFT && gameTicks > nextTimeLeft){
+			nextTimeLeft = gameTicks + keybordLatency * 2;
 			currentTetros.positionX -= 1;
 		}
 		if (collide()) {
@@ -238,13 +306,25 @@ class PlayState extends FlxState
 			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
 		}
 		
+		if (collide()) {
+			
+			currentTetros.positionX = oldX;
+			currentTetros.positionY = oldY;
+			currentTetros.rotation = oldR;
+			
+			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
+		}
+		
 		//eleve la pause du force down
-		if(!FlxG.keys.anyPressed([DOWN])) {
+		if(!FlxG.keys.pressed.DOWN) {
 			pauseFroceDrop = false;
 		}
 		
+		
+		
 		//acceleration du tetros
-		if (FlxG.keys.anyPressed([DOWN]) && pauseFroceDrop == false){
+		if (FlxG.keys.pressed.DOWN && pauseFroceDrop == false && gameTicks > nextTimeDown){
+			nextTimeDown = gameTicks + keybordLatency;
 			currentTetros.positionY += 1;
 			timeDrop = dropSpeed;
 			if(collide()){
@@ -274,17 +354,8 @@ class PlayState extends FlxState
 			}
 		}
 		
-		if (collide()) {
-			
-			currentTetros.positionX = oldX;
-			currentTetros.positionY = oldY;
-			currentTetros.rotation = oldR;
-			
-			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
-		}
-		
-		
-		
+		testLigneComplete();
+
 		super.update(elapsed);
 	}
 	
@@ -365,8 +436,12 @@ class PlayState extends FlxState
 	private function spanwTetros():Void
 	{
 		currentTetros = new Tetros();
-		var random = new FlxRandom();
-		currentTetros.id = random.int(1, 7);
+		var nBag = random.int(0, (bag.length -1));
+		currentTetros.id = bag[nBag];
+		bag.splice(nBag, 1);
+		if(bag.length == 0){
+			getNewBag();
+		}
 		currentTetros.color = tetrosColor[currentTetros.id];
 		//centrage du tetros x
 		var tetrosWidth = tetros[currentTetros.id][currentTetros.rotation][0].length;
@@ -377,9 +452,14 @@ class PlayState extends FlxState
 		timeDrop = dropSpeed;
 		
 		drawShape(currentTetros.shape, currentTetros.positionX, currentTetros.positionY);
+		
+		if(collide()){
+			FlxG.sound.destroy(true);
+			FlxG.switchState(new GameOver());
+		}
 	}
 	
-	private function removeLineGrid(pLine) 
+	private function removeLineGrid(pLine):Void
 	{
 		var token:Bool = true;
 		var ligne:Int = pLine;
@@ -399,9 +479,10 @@ class PlayState extends FlxState
 		add(grid.drawGrid());
 	}
 	
-	private function testLigneComplete() 
+	private function testLigneComplete():Void
 	{
 		var ligneComplete:Bool;
+		var nbLines:Int = 0;
 		for (l in 0...grid.height) 
 		{
 			ligneComplete = true;
@@ -416,7 +497,50 @@ class PlayState extends FlxState
 			if (ligneComplete == true) 
 			{
 				removeLineGrid(l);
+				nbLines++;
 			}
+		}
+		lines += nbLines;
+		linesTxt.text = '$lines';
+		if(nbLines > 0) {
+			//play son removeLine
+			removeLineSon.play();
+		}
+		
+		//calcul score
+		if(nbLines == 1){
+			score += (100 * level);
+		}else if(nbLines == 2){
+			score += (300 * level);
+		}else if(nbLines == 3){
+			score += (400 * level);
+		}else if(nbLines == 4){
+			score += (800 * level);
+		}
+		scoreTxt.text = '$score';
+		manageLevel();
+	}
+	
+	private function manageLevel():Void
+	{
+		var newLevel = Math.floor(lines / 10) + 1;
+		if(newLevel <= 20 && newLevel > level){
+			level = newLevel;
+			dropSpeed -= 0.08;
+			//joue son levelup
+			levelUp.play();
+			levelTxt.text = '$level';
+		}
+	}
+	
+	private function getNewBag():Void
+	{
+		bag = new Array();
+		
+		for (i in 1...8)
+		{
+			bag.push(i);
+			bag.push(i);
 		}
 	}
 }

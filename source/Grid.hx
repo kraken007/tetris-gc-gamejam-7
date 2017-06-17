@@ -18,6 +18,7 @@ class Grid
 	public var cells:Array<Array<Int>>;
 	private var offsetX:Float = 0;
 	private var colorTetros:Map<Int, FlxColor>;
+	public var displayGrid:FlxTypedGroup<FlxSprite>;
 
 	public function new(ptetrosColor:Map<Int, FlxColor>) 
 	{
@@ -26,11 +27,18 @@ class Grid
 		offsetX = (FlxG.width / 2) - (cellSize * width / 2);
 		
 		cells = [for (ligne in 0...height) [for (collone in 0...width) 0]];
+		
+		displayGrid = new FlxTypedGroup();
 	}
 	
 	public function drawGrid()
 	{
-		var test = new FlxTypedGroup();
+		//FlxG.watch.addQuick('displayGridElemLive', displayGrid.countLiving());
+		if(displayGrid.countLiving() > 0 ) {
+			displayGrid.destroy();
+			displayGrid = new FlxTypedGroup();
+		}
+		
 		var currentLine:Int = 0;
 		var currentCol:Int = 0;
 		var color:FlxColor = new FlxColor();
@@ -46,14 +54,14 @@ class Grid
 					color.setRGB(128, 128, 128, 255);
 				}
 				sprite.makeGraphic(Math.round(cellSize) - 1, Math.round(cellSize) - 1, color);
-				test.add(sprite);
+				displayGrid.add(sprite);
 				currentCol++;
 			}
 			currentLine++;
 			currentCol = 0;
 		}
 		
-		return test;
+		return displayGrid;
 	}
 	
 	public function getCellSize(){
