@@ -5,6 +5,8 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.system.FlxSound;
 import flixel.system.FlxAssets;
+import openfl.Assets;
+//import openfl.text;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
 /**
@@ -18,7 +20,7 @@ class MenuState extends FlxState
 	override public function create():Void
 	{
 		super.create();
-		
+		FlxG.log.redirectTraces = true;
 		//FlxG.mouse.visible = false;
 		
 		if (FlxG.sound.music != null) 
@@ -28,12 +30,18 @@ class MenuState extends FlxState
 		FlxG.sound.play(AssetPaths.kanadaka_pluck_menu__ogg,0.5,true);
 		
 		//font
-		FlxAssets.FONT_DEFAULT = AssetPaths.blocked__ttf;
+		#if html5
+			trace("if ok");
+		#else
+			FlxAssets.FONT_DEFAULT = AssetPaths.blocked__ttf;
+			trace("else ok");
+		#end
+		
 		var text = new FlxText(0, 0,0, "ENTER TO START !", 50, true);
 		var color = new FlxColor();
 		color.setRGB(255, 0, 0, 255);
 		text.color = color;
-		text.setPosition((FlxG.width - text.fieldWidth)/2, (FlxG.height - text.height) /2);
+		text.setPosition((FlxG.width - text.fieldWidth) / 2, (FlxG.height - text.height) / 2);
 		add(text);
 	}
 	

@@ -28,7 +28,13 @@ class GameOver extends FlxState
 		FlxG.sound.play(AssetPaths.Forward_Brass_game_over__ogg, 0.5, true);
 		#end
 		
-		FlxAssets.FONT_DEFAULT = AssetPaths.blocked__ttf;
+		//font
+		#if html5
+			trace("if ok");
+		#else
+			FlxAssets.FONT_DEFAULT = AssetPaths.blocked__ttf;
+			trace("else ok");
+		#end
 		var gameOverTxt:String = "GAME OVER :(";
 		var text = new FlxText(0, 0, 0, gameOverTxt, 50, true);
 		var color = new FlxColor();

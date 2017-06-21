@@ -67,13 +67,19 @@ class PlayState extends FlxState
 		
 		//FlxG.mouse.visible = false;
 		//FlxG.debugger.visible = true;
-		//FlxG.log.redirectTraces = true;
+		FlxG.log.redirectTraces = true;
 		
 		//affichage du score, level et lines
 		level = 1;
 		lines = 0;
 		score = 0;
-		FlxAssets.FONT_DEFAULT = AssetPaths.blocked__ttf;
+		//font
+		#if html5
+			trace("if ok");
+		#else
+			FlxAssets.FONT_DEFAULT = AssetPaths.blocked__ttf;
+			trace("else ok");
+		#end
 		var texteY = 100;
 		var texteX = 10;
 		
