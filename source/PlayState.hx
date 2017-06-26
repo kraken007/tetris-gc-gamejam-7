@@ -37,6 +37,7 @@ class PlayState extends FlxState
 	private var removeLineSon:FlxSound;
 	
 	private var currentTetros:Tetros;
+	private var nextTetros:Tetros;
 	private var grid:Grid;
 	private var bag:Array<Int>;
 	
@@ -44,6 +45,7 @@ class PlayState extends FlxState
 	private var tetrosColor:Map<Int, FlxColor>;
 	
 	private var shape:FlxTypedGroup<FlxSprite>;
+	private var nextShape:FlxTypedGroup<FlxSprite>;
 	
 	private var random:FlxRandom;
 		
@@ -251,7 +253,17 @@ class PlayState extends FlxState
 		
 		//on remplis le sac d'id de tetrominos
 		getNewBag();
-		
+		trace('newbag');
+		//on init les 2 tetros current et next
+		currentTetros = new Tetros();
+		nextTetros = new Tetros();
+		var nBag = random.int(0, (bag.length -1));
+		nextTetros.id = bag[nBag];
+		bag.splice(nBag, 1);
+		trace('init next Tetros');
+		//dessine le carré pour la affiché le nextTetros
+		drawCarre();
+
 		//départ on fait spanw un tetrominos
 		spanwTetros();		
 		
@@ -265,8 +277,7 @@ class PlayState extends FlxState
 		//FlxG.watch.addQuick('stop', stop);
 		//FlxG.watch.addQuick('cells', grid.cells);
 		//FlxG.watch.addQuick('pauseFroceDrop', pauseFroceDrop);
-		
-		
+			
 		super.create();
 	}
 
@@ -393,6 +404,38 @@ class PlayState extends FlxState
 		add(shape);
 	}
 	
+	private function drawNextShape(pSourceForm:Array<Array<Int>>):Void
+	{
+		if(nextShape != null){
+			nextShape.kill();
+		}
+		nextShape = new FlxTypedGroup();
+		nextTetros.shape = pSourceForm;
+		var currentLine:Int = 0;
+		var currentColumn:Int = 0;
+		//todo centré dans le carré.
+		//todo prendre en compte le nb de carré de la shape pour centré dans le carré.
+		//										    	offsetGrid + epaisseur + padding	
+		var offset = offsetX + grid.getCellSize() * grid.width + 20 + 3 + 5;
+		for (line in pSourceForm) {
+			for(column in line){
+				if(column == 1){
+					var sprite:FlxSprite = new FlxSprite(tailleCarre * currentColumn + offset, tailleCarre * currentLine);
+					sprite.makeGraphic(tailleCarre -1, tailleCarre - 1, nextTetros.color);
+					//positionné le sprite dans la bonne colonne.
+					//sprite.x = sprite.x + (pX) * tailleCarre;
+					//sprite.y = sprite.y + (pY) * tailleCarre;
+					nextShape.add(sprite);
+				}
+				currentColumn++;
+			}
+			currentLine++;
+			currentColumn = 0;
+		}
+
+		add(nextShape);
+	}
+	
 	private function collide():Bool
 	{
 		var tmpShape:Array<Array<Int>>;
@@ -441,10 +484,19 @@ class PlayState extends FlxState
 	
 	private function spanwTetros():Void
 	{
-		currentTetros = new Tetros();
+		trace('entre spawn');
+		//next devient current
+		currentTetros = nextTetros;
+		
+		//on tire un nouveau tetros
+		nextTetros = new Tetros();
 		var nBag = random.int(0, (bag.length -1));
-		currentTetros.id = bag[nBag];
+		nextTetros.id = bag[nBag];
 		bag.splice(nBag, 1);
+		nextTetros.shape = tetros[nextTetros.id][nextTetros.rotation];
+		nextTetros.color = tetrosColor[nextTetros.id];
+		
+		//si bag vide on re-remplis
 		if(bag.length == 0){
 			getNewBag();
 		}
@@ -454,15 +506,19 @@ class PlayState extends FlxState
 		currentTetros.positionX = Math.floor((grid.width - tetrosWidth) / 2);
 		currentTetros.shape = tetros[currentTetros.id][currentTetros.rotation];
 		
+		
+		
 		pauseFroceDrop = true;
 		timeDrop = dropSpeed;
 		
 		drawShape(currentTetros.shape, currentTetros.positionX, currentTetros.positionY);
+		drawNextShape(nextTetros.shape);
 		
 		if(collide()){
 			FlxG.sound.destroy(true);
 			FlxG.switchState(new GameOver());
 		}
+		trace('end spawn');
 	}
 	
 	private function removeLineGrid(pLine):Void
@@ -548,5 +604,29 @@ class PlayState extends FlxState
 			bag.push(i);
 			bag.push(i);
 		}
+	}
+	
+	private function drawCarre():Void
+	{
+		var longeur = Math.floor(grid.getCellSize() * 4) + 10;
+		var epaisseur = 3;
+		var offset = offsetX + grid.getCellSize() * grid.width + 20;
+		//déssiné 4 ligne de width 4*cellezise et h idem pour faire un carré!
+		var carre = new FlxTypedGroup();
+		
+		var lineH = new FlxSprite(0 + offset, 0);
+		lineH.makeGraphic(longeur, epaisseur);
+		carre.add(lineH);
+		var lineB = new FlxSprite(0 + offset, longeur);
+		lineB.makeGraphic(longeur, epaisseur);
+		carre.add(lineB);
+		var lineG = new FlxSprite(0 + offset, 0);
+		lineG.makeGraphic(epaisseur, longeur);
+		carre.add(lineG);
+		var lineD = new FlxSprite(longeur + offset, 0);
+		lineD.makeGraphic(epaisseur, longeur + epaisseur);
+		carre.add(lineD);
+		
+		add(carre);
 	}
 }
