@@ -41,8 +41,8 @@ class PlayState extends FlxState
 	private var grid:Grid;
 	private var bag:Array<Int>;
 	
-	private var tetros:Map<Int, Array<Array<Array<Int>>>>;
-	private var tetrosColor:Map<Int, FlxColor>;
+	private var tetros:Map<Int, Array<Array<Array<Int>>>>;	
+	private var tetrosFactory:TetrosFactory;
 	
 	private var shape:FlxTypedGroup<FlxSprite>;
 	private var nextShape:FlxTypedGroup<FlxSprite>;
@@ -113,138 +113,11 @@ class PlayState extends FlxState
 		levelTxt = new FlxText(texteX, texteY, 0, '$level', 30, true);
 		levelTxt.color = tmpColor;
 		add(levelTxt);
+
+		tetrosFactory = new TetrosFactory();
+		tetros = tetrosFactory.tetrosConfig;
 		
-		tetros = [
-			1 => [
-				[
-					[0,0,0,0],
-					[0,0,0,0],
-					[1,1,1,1],
-					[0,0,0,0],
-				],
-				[
-					[0,1,0,0],
-					[0,1,0,0],
-					[0,1,0,0],
-					[0,1,0,0],
-				]
-			],
-			2 => [
-				[
-					[0,0,0,0],
-					[0,1,1,0],
-					[0,1,1,0],
-					[0,0,0,0],
-				]
-			],
-			3 => [
-				[
-					[0,0,0],
-					[1,1,1],
-					[0,0,1],
-				],
-				[
-					[0,1,0],
-					[0,1,0],
-					[1,1,0],
-				],
-				[
-					[1,0,0],
-					[1,1,1],
-					[0,0,0],
-				],
-				[
-					[0,1,1],
-					[0,1,0],
-					[0,1,0],
-				],
-			],
-			4 => [
-				[
-					[0,0,0],
-					[1,1,1],
-					[1,0,0],
-				],
-				[
-					[1,1,0],
-					[0,1,0],
-					[0,1,0],
-				],
-				[
-					[0,0,1],
-					[1,1,1],
-					[0,0,0],
-				],
-				[
-					[1,0,0],
-					[1,0,0],
-					[1,1,0],
-				]
-			],
-			5 => [
-				[
-					[0,0,0],
-					[0,1,1],
-					[1,1,0],
-				],
-				[
-					[0,1,0],
-					[0,1,1],
-					[0,0,1],
-				]
-			],
-			6 => [
-				[
-					[0,0,0],
-					[1,1,1],
-					[0,1,0],
-				],
-				[
-					[0,1,0],
-					[1,1,0],
-					[0,1,0],
-				],
-				[
-					[0,1,0],
-					[1,1,1],
-					[0,0,0],
-				],
-				[
-					[0,1,0],
-					[0,1,1],
-					[0,1,0],
-				]
-			],
-			7 => [
-				[
-					[0,0,0],
-					[1,1,0],
-					[0,1,1],
-				],
-				[
-					[0,1,0],
-					[1,1,0],
-					[1,0,0],
-				]
-			]
-		];
-		tetrosColor = new Map();
-		var color1:FlxColor = new FlxColor();
-		tetrosColor.set(1, color1.setRGB(255, 0, 0, 255));
-		var color2:FlxColor = new FlxColor();
-		tetrosColor.set(2, color2.setRGB(0, 71, 222, 255));
-		var color3:FlxColor = new FlxColor();
-		tetrosColor.set(3, color3.setRGB(222, 184, 0, 255));
-		var color4:FlxColor = new FlxColor();
-		tetrosColor.set(4, color4.setRGB(222, 0, 222, 255));
-		var color5:FlxColor = new FlxColor();
-		tetrosColor.set(5, color5.setRGB(255, 151, 0, 255));
-		var color6:FlxColor = new FlxColor();
-		tetrosColor.set(6, color6.setRGB(71, 184, 0, 255));
-		var color7:FlxColor = new FlxColor();
-		tetrosColor.set(7, color7.setRGB(0, 184 ,151, 255));
-		
-		grid = new Grid(tetrosColor);
+		grid = new Grid(tetrosFactory.tetrosColor);
 		
 		add(grid.drawGrid());
 		
@@ -252,15 +125,14 @@ class PlayState extends FlxState
 		offsetX = Math.round(grid.getOffsetX());
 		
 		//on remplis le sac d'id de tetrominos
-		getNewBag();
-		trace('newbag');
+		bag = tetrosFactory.getNewBag();
+
 		//on init les 2 tetros current et next
 		currentTetros = new Tetros();
 		nextTetros = new Tetros();
 		var nBag = random.int(0, (bag.length -1));
 		nextTetros.id = bag[nBag];
 		bag.splice(nBag, 1);
-		trace('init next Tetros');
 		//dessine le carré pour la affiché le nextTetros
 		drawCarre();
 
@@ -494,19 +366,17 @@ class PlayState extends FlxState
 		nextTetros.id = bag[nBag];
 		bag.splice(nBag, 1);
 		nextTetros.shape = tetros[nextTetros.id][nextTetros.rotation];
-		nextTetros.color = tetrosColor[nextTetros.id];
+		nextTetros.color = tetrosFactory.tetrosColor[nextTetros.id];
 		
 		//si bag vide on re-remplis
 		if(bag.length == 0){
-			getNewBag();
+			bag = tetrosFactory.getNewBag();
 		}
-		currentTetros.color = tetrosColor[currentTetros.id];
+		currentTetros.color = tetrosFactory.tetrosColor[currentTetros.id];
 		//centrage du tetros x
 		var tetrosWidth = tetros[currentTetros.id][currentTetros.rotation][0].length;
 		currentTetros.positionX = Math.floor((grid.width - tetrosWidth) / 2);
 		currentTetros.shape = tetros[currentTetros.id][currentTetros.rotation];
-		
-		
 		
 		pauseFroceDrop = true;
 		timeDrop = dropSpeed;
@@ -594,18 +464,7 @@ class PlayState extends FlxState
 			levelTxt.text = '$level';
 		}
 	}
-	
-	private function getNewBag():Void
-	{
-		bag = new Array();
-		
-		for (i in 1...8)
-		{
-			bag.push(i);
-			bag.push(i);
-		}
-	}
-	
+
 	private function drawCarre():Void
 	{
 		var longeur = Math.floor(grid.getCellSize() * 4) + 10;
