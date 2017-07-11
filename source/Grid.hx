@@ -33,7 +33,6 @@ class Grid
 	
 	public function drawGrid()
 	{
-		//FlxG.watch.addQuick('displayGridElemLive', displayGrid.countLiving());
 		if(displayGrid.countLiving() > 0 ) {
 			displayGrid.destroy();
 			displayGrid = new FlxTypedGroup();
@@ -51,7 +50,7 @@ class Grid
 					color = colorTetros[id];
 				}else{
 					color = new FlxColor();
-					color.setRGB(128, 128, 128, 255);
+					color.setRGB(128, 128, 128, 192);
 				}
 				sprite.makeGraphic(Math.round(cellSize) - 1, Math.round(cellSize) - 1, color);
 				displayGrid.add(sprite);

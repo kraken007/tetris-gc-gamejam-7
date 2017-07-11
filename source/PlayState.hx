@@ -113,7 +113,8 @@ class PlayState extends FlxState
 		levelTxt = new FlxText(texteX, texteY, 0, '$level', 30, true);
 		levelTxt.color = tmpColor;
 		add(levelTxt);
-
+		
+		//tetrominos
 		tetrosFactory = new TetrosFactory();
 		tetros = tetrosFactory.tetrosConfig;
 		
@@ -130,25 +131,21 @@ class PlayState extends FlxState
 		//on init les 2 tetros current et next
 		currentTetros = new Tetros();
 		nextTetros = new Tetros();
+		//on tire aux hasard un tetros du sac
 		var nBag = random.int(0, (bag.length -1));
+		// on n'affect l'id au next tetros car il deviendra le current dans le passage dans la methode spawnTetros
 		nextTetros.id = bag[nBag];
+		//on supprime le tetros du sac
 		bag.splice(nBag, 1);
-		//dessine le carré pour la affiché le nextTetros
+		
+		//on dessine le carré pour la affiché le nextTetros
 		drawCarre();
 
-		//départ on fait spanw un tetrominos
-		spanwTetros();		
+		//départ on fait spawn un tetrominos
+		spawnTetros();		
 		
 		//gestion du temps pour faire tombé le tetros
 		timeDrop = dropSpeed;
-		
-		//FlxG.watch.add(currentTetros,"rotation");
-		//FlxG.watch.add(currentTetros, "id");
-		//FlxG.watch.add(currentTetros,"positionY");
-		//FlxG.watch.add(currentTetros, "positionX");
-		//FlxG.watch.addQuick('stop', stop);
-		//FlxG.watch.addQuick('cells', grid.cells);
-		//FlxG.watch.addQuick('pauseFroceDrop', pauseFroceDrop);
 			
 		super.create();
 	}
@@ -220,7 +217,7 @@ class PlayState extends FlxState
 				currentTetros.positionY -=  1;
 				transfer();
 				testLigneComplete();
-				spanwTetros();
+				spawnTetros();
 			}else {
 				drawShape(tetros[currentTetros.id][currentTetros.rotation],currentTetros.positionX, currentTetros.positionY);
 			}
@@ -237,7 +234,7 @@ class PlayState extends FlxState
 				currentTetros.positionY -=  1;
 				transfer();
 				testLigneComplete();
-				spanwTetros();
+				spawnTetros();
 			}else {
 				drawShape(tetros[currentTetros.id][currentTetros.rotation],currentTetros.positionX, currentTetros.positionY);
 			}
@@ -354,19 +351,18 @@ class PlayState extends FlxState
 		add(grid.drawGrid());
 	}
 	
-	private function spanwTetros():Void
+	private function spawnTetros():Void
 	{
-		trace('entre spawn');
 		//next devient current
 		currentTetros = nextTetros;
 		
 		//on tire un nouveau tetros
-		nextTetros = new Tetros();
+		
 		var nBag = random.int(0, (bag.length -1));
-		nextTetros.id = bag[nBag];
+		var idTetros = bag[nBag];
 		bag.splice(nBag, 1);
-		nextTetros.shape = tetros[nextTetros.id][nextTetros.rotation];
-		nextTetros.color = tetrosFactory.tetrosColor[nextTetros.id];
+		
+		nextTetros = new Tetros(0,0, idTetros, tetrosFactory.tetrosColor[idTetros], tetros[idTetros][nextTetros.rotation]);
 		
 		//si bag vide on re-remplis
 		if(bag.length == 0){
