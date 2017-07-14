@@ -128,13 +128,11 @@ class PlayState extends FlxState
 		//on remplis le sac d'id de tetrominos
 		bag = tetrosFactory.getNewBag();
 
-		//on init les 2 tetros current et next
-		currentTetros = new Tetros();
-		nextTetros = new Tetros();
 		//on tire aux hasard un tetros du sac
 		var nBag = random.int(0, (bag.length -1));
 		// on n'affect l'id au next tetros car il deviendra le current dans le passage dans la methode spawnTetros
-		nextTetros.id = bag[nBag];
+		nextTetros = new Tetros(0,0,bag[nBag],tetrosFactory.tetrosColor[bag[nBag]],tetrosFactory.tetrosConfig[bag[nBag]],tailleCarre, offsetX);
+		
 		//on supprime le tetros du sac
 		bag.splice(nBag, 1);
 		
@@ -164,21 +162,22 @@ class PlayState extends FlxState
 		//déplacement tetros
 		if (FlxG.keys.pressed.RIGHT && gameTicks > nextTimeRight){
 			nextTimeRight = gameTicks + keybordLatency * 2;
-			currentTetros.positionX += 1;
+			currentTetros.movePlusX();
 		}
 		if (FlxG.keys.pressed.LEFT && gameTicks > nextTimeLeft){
 			nextTimeLeft = gameTicks + keybordLatency * 2;
-			currentTetros.positionX -= 1;
+			currentTetros.moveMoinsX();
 		}
 		if (collide()) {
 			
 			currentTetros.positionX = oldX;
 			currentTetros.positionY = oldY;
 			currentTetros.rotation = oldR;
+			currentTetros.initShape();
 			
-			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
+			//drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
 		}else{
-			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
+			//drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
 		}
 		
 		//rotation tetros
@@ -189,7 +188,8 @@ class PlayState extends FlxState
 			}else{
 				currentTetros.rotation += 1;
 			}
-			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
+			currentTetros.initShape();
+			//drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
 		}
 		
 		if (collide()) {
@@ -197,29 +197,28 @@ class PlayState extends FlxState
 			currentTetros.positionX = oldX;
 			currentTetros.positionY = oldY;
 			currentTetros.rotation = oldR;
-			
-			drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
+			currentTetros.initShape();
+			//drawShape(tetros[currentTetros.id][currentTetros.rotation], currentTetros.positionX, currentTetros.positionY);
 		}
 		
 		//eleve la pause du force down
 		if(!FlxG.keys.pressed.DOWN) {
 			pauseFroceDrop = false;
 		}
-		
-		
-		
+
 		//acceleration du tetros
 		if (FlxG.keys.pressed.DOWN && pauseFroceDrop == false && gameTicks > nextTimeDown){
 			nextTimeDown = gameTicks + keybordLatency;
-			currentTetros.positionY += 1;
+			currentTetros.movePlusY();
 			timeDrop = dropSpeed;
 			if(collide()){
-				currentTetros.positionY -=  1;
+				currentTetros.moveMoinsY();
+				currentTetros.initShape();
 				transfer();
 				testLigneComplete();
 				spawnTetros();
 			}else {
-				drawShape(tetros[currentTetros.id][currentTetros.rotation],currentTetros.positionX, currentTetros.positionY);
+				//drawShape(tetros[currentTetros.id][currentTetros.rotation],currentTetros.positionX, currentTetros.positionY);
 			}
 		}
 		
@@ -227,16 +226,17 @@ class PlayState extends FlxState
 		
 		if (timeDrop <= 0){
 			
-			currentTetros.positionY += 1;
+			currentTetros.movePlusY;
 			timeDrop = dropSpeed;
 			
 			if(collide()){
-				currentTetros.positionY -=  1;
+				currentTetros.moveMoinsY;
+				currentTetros.initShape();
 				transfer();
 				testLigneComplete();
 				spawnTetros();
 			}else {
-				drawShape(tetros[currentTetros.id][currentTetros.rotation],currentTetros.positionX, currentTetros.positionY);
+				//drawShape(tetros[currentTetros.id][currentTetros.rotation],currentTetros.positionX, currentTetros.positionY);
 			}
 		}
 		
@@ -245,33 +245,33 @@ class PlayState extends FlxState
 		super.update(elapsed);
 	}
 	
-	private function drawShape(pSourceForm:Array<Array<Int>>, pX, pY):Void
-	{
-		if(shape != null){
-			shape.kill();
-		}
-		shape = new FlxTypedGroup();
-		currentTetros.shape = pSourceForm;
-		var currentLine:Int = 0;
-		var currentColumn:Int = 0;
-		for (line in pSourceForm) {
-			for(column in line){
-				if(column == 1){
-					var sprite:FlxSprite = new FlxSprite(tailleCarre * currentColumn + offsetX, tailleCarre * currentLine);
-					sprite.makeGraphic(tailleCarre -1, tailleCarre - 1, currentTetros.color);
-					//positionné le sprite dans la bonne colonne.
-					sprite.x = sprite.x + (pX) * tailleCarre;
-					sprite.y = sprite.y + (pY) * tailleCarre;
-					shape.add(sprite);
-				}
-				currentColumn++;
-			}
-			currentLine++;
-			currentColumn = 0;
-		}
-
-		add(shape);
-	}
+	//private function drawShape(pSourceForm:Array<Array<Int>>, pX, pY):Void
+	//{
+		//if(shape != null){
+			//shape.kill();
+		//}
+		//shape = new FlxTypedGroup();
+		//currentTetros.shape = pSourceForm;
+		//var currentLine:Int = 0;
+		//var currentColumn:Int = 0;
+		//for (line in pSourceForm) {
+			//for(column in line){
+				//if(column == 1){
+					//var sprite:FlxSprite = new FlxSprite(tailleCarre * currentColumn + offsetX, tailleCarre * currentLine);
+					//sprite.makeGraphic(tailleCarre -1, tailleCarre - 1, currentTetros.color);
+					////positionné le sprite dans la bonne colonne.
+					//sprite.x = sprite.x + (pX) * tailleCarre;
+					//sprite.y = sprite.y + (pY) * tailleCarre;
+					//shape.add(sprite);
+				//}
+				//currentColumn++;
+			//}
+			//currentLine++;
+			//currentColumn = 0;
+		//}
+//
+		//add(shape);
+	//}
 	
 	private function drawNextShape(pSourceForm:Array<Array<Int>>):Void
 	{
@@ -279,7 +279,7 @@ class PlayState extends FlxState
 			nextShape.kill();
 		}
 		nextShape = new FlxTypedGroup();
-		nextTetros.shape = pSourceForm;
+		nextTetros.configForm = pSourceForm;
 		var currentLine:Int = 0;
 		var currentColumn:Int = 0;
 		//todo centré dans le carré.
@@ -291,9 +291,6 @@ class PlayState extends FlxState
 				if(column == 1){
 					var sprite:FlxSprite = new FlxSprite(tailleCarre * currentColumn + offset, tailleCarre * currentLine);
 					sprite.makeGraphic(tailleCarre -1, tailleCarre - 1, nextTetros.color);
-					//positionné le sprite dans la bonne colonne.
-					//sprite.x = sprite.x + (pX) * tailleCarre;
-					//sprite.y = sprite.y + (pY) * tailleCarre;
 					nextShape.add(sprite);
 				}
 				currentColumn++;
@@ -335,7 +332,7 @@ class PlayState extends FlxState
 	private function transfer():Void 
 	{
 		var tmpShape:Array<Array<Int>>;
-		tmpShape = currentTetros.shape;
+		tmpShape = currentTetros.configForm;
 		for (l in 0...tmpShape.length) 
 		{
 			for (c in 0...tmpShape[l].length) 
@@ -357,12 +354,11 @@ class PlayState extends FlxState
 		currentTetros = nextTetros;
 		
 		//on tire un nouveau tetros
-		
 		var nBag = random.int(0, (bag.length -1));
 		var idTetros = bag[nBag];
 		bag.splice(nBag, 1);
 		
-		nextTetros = new Tetros(0,0, idTetros, tetrosFactory.tetrosColor[idTetros], tetros[idTetros][nextTetros.rotation]);
+		nextTetros = new Tetros(0,0, idTetros, tetrosFactory.tetrosColor[idTetros], tetros[idTetros],tailleCarre,offsetX);
 		
 		//si bag vide on re-remplis
 		if(bag.length == 0){
@@ -372,19 +368,19 @@ class PlayState extends FlxState
 		//centrage du tetros x
 		var tetrosWidth = tetros[currentTetros.id][currentTetros.rotation][0].length;
 		currentTetros.positionX = Math.floor((grid.width - tetrosWidth) / 2);
-		currentTetros.shape = tetros[currentTetros.id][currentTetros.rotation];
+		currentTetros.configForm = tetros[currentTetros.id][currentTetros.rotation];
+		currentTetros.initShape();
 		
 		pauseFroceDrop = true;
 		timeDrop = dropSpeed;
 		
-		drawShape(currentTetros.shape, currentTetros.positionX, currentTetros.positionY);
-		drawNextShape(nextTetros.shape);
+		//drawShape(currentTetros.shape, currentTetros.positionX, currentTetros.positionY);
+		drawNextShape(nextTetros.configForm);
 		
 		if(collide()){
 			FlxG.sound.destroy(true);
 			FlxG.switchState(new GameOver());
 		}
-		trace('end spawn');
 	}
 	
 	private function removeLineGrid(pLine):Void

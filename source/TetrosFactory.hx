@@ -12,7 +12,7 @@ import flixel.util.FlxColor;
  */
 class TetrosFactory 
 {
-	public var tetrosConfig:Dynamic;
+	public var tetrosConfig:Map<Int, Array<Array<Array<Int>>>>;
 	public var tetrosColor:Map<Int, FlxColor>;
 	
 	public function new() 
